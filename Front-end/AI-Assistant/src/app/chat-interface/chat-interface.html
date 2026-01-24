@@ -7,19 +7,18 @@
 
         </div>
         <div id="textarea" class="w-full p-2 bg-zinc-800 border-t flex justify-center">
-            <div class="flex justify-center gap-1 bg-zinc-600 p-2 col-span-6"
-                [ngClass]="borderRadius">
+            <div class="flex justify-center gap-1 bg-zinc-600 p-2 col-span-6" [ngClass]="borderRadius">
                 <div class="relative">
                     <div *ngIf="showCard" class="absolute bottom-15 rounded-lg bg-zinc-500">
                         <div class="w-50">
                             <div class="m-2 hover:bg-zinc-600 rounded-lg p-1">
-                                <button class="flex gap-1">
+                                <button class="flex gap-1" (click)="fileSelecter('image')">
                                     <img class="w-6 h-6" src="image-2.png" alt="image">
                                     <span>Upload Image</span>
                                 </button>
                             </div>
                             <div class="m-2 hover:bg-zinc-600 rounded-lg p-1">
-                                <button class="flex gap-1">
+                                <button class="flex gap-1" (click)="fileSelecter('document')">
                                     <img class="w-6 h-6" src="more-information.png" alt="">
                                     <span>Upload Document</span>
                                 </button>
@@ -44,11 +43,28 @@
                         +
                     </button>
                 </div>
-                <div class="rounded-full w-170 min-h-10 max-h-50 flex items-end">
-                    <div></div>
+                <div class="rounded-full w-170 min-h-10 max-h-50">
+                    <div>
+                        <div *ngIf="FileSelected" class="w-full h-full flex gap-2">
+                            @for (file of selectedFiles; track file.preview) {
+                            <div class="relative">
+                                <button (click)="removeItem(file)"
+                                    class="rounded-full absolute -right-1 w-5 h-5 flex items-center justify-center p-0 bg-zinc-400">
+                                    x
+                                </button>
+                                <div>
+                                    <img *ngIf="file.preview" [src]="file.preview" alt="image" class="rounded-lg w-25 h-25">
+                                    <img *ngIf="!file.preview" class="w-25 h-25" src="more-information.png"
+                                        alt="document">
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        <input type="file" hidden #fileInput (change)="onFileSelected($event)">
+                    </div>
                     <textarea placeholder="Type a message..." #chatInput (input)="autoGrow(chatInput)"
-                    class="w-full bg-transparent py-2 px-3 focus:outline-none overflow-y-hidden max-h-50 text-white"
-                    rows="1">
+                        class="w-full bg-transparent py-2 px-3 focus:outline-none overflow-y-hidden max-h-50 text-white"
+                        rows="1">
                     </textarea>
                     <!--  focus:outline-none focus:ring-2 focus:ring-blue-500-->
                 </div>
