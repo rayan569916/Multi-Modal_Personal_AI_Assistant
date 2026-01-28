@@ -1,25 +1,24 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Attachment } from './chat-interface.interface';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-chat-interface',
-  imports: [CommonModule],
+  imports: [CommonModule,FormsModule],
   templateUrl: './chat-interface.html',
   styleUrl: './chat-interface.css',
 })
 
 
-export class ChatInterfaceComponent implements OnInit {
+export class ChatInterfaceComponent{
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>
   FileSelected: boolean = false;
   selectedFiles: Attachment[] = [];
   showCard: boolean = false;
   borderRadius = "rounded-full items-center";
   allignItems = "";
-  ngOnInit() {
-    // this.showCard();
-  }
+  chatValue:string="";
 
   showCardMethod() {
     this.showCard = !this.showCard;
@@ -84,7 +83,8 @@ export class ChatInterfaceComponent implements OnInit {
   }
 
   removeItem(file:Attachment){
-    
+    this.selectedFiles= this.selectedFiles.filter(f=>f!=file);
+    console.log(this.selectedFiles)
   }
 
 }
