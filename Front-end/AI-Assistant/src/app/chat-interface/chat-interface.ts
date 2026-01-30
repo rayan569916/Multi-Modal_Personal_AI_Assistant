@@ -1,7 +1,8 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Attachment } from './chat-interface.interface';
 import { FormsModule } from '@angular/forms';
+import { chatInterfaceService } from './chat-interface.service';
 
 @Component({
   selector: 'app-chat-interface',
@@ -11,7 +12,7 @@ import { FormsModule } from '@angular/forms';
 })
 
 
-export class ChatInterfaceComponent{
+export class ChatInterfaceComponent implements OnInit{
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>
   FileSelected: boolean = false;
   selectedFiles: Attachment[] = [];
@@ -19,6 +20,25 @@ export class ChatInterfaceComponent{
   borderRadius = "rounded-full items-center";
   allignItems = "";
   chatValue:string="";
+
+  constructor(private aiService: chatInterfaceService){}
+
+  ngOnInit(){
+
+  }
+
+  sendChatMethod(){
+    const formData= new FormData();
+    const textmsg=this.chatValue;
+    formData.append('text', textmsg);
+    this.selectedFiles.forEach((item,index)=>{
+      formData.append('attachements',item.file)
+    })
+    console.log(formData)
+    this.aiService.sendChatMethod(formData).subscribe(res=>{
+      console.log(res);
+    })
+  }
 
   showCardMethod() {
     this.showCard = !this.showCard;
