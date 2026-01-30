@@ -3,41 +3,80 @@ import { CommonModule } from '@angular/common';
 import { Attachment } from './chat-interface.interface';
 import { FormsModule } from '@angular/forms';
 import { chatInterfaceService } from './chat-interface.service';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-chat-interface',
-  imports: [CommonModule,FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './chat-interface.html',
   styleUrl: './chat-interface.css',
 })
 
 
-export class ChatInterfaceComponent implements OnInit{
+export class ChatInterfaceComponent implements OnInit {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>
   FileSelected: boolean = false;
   selectedFiles: Attachment[] = [];
   showCard: boolean = false;
   borderRadius = "rounded-full items-center";
   allignItems = "";
-  chatValue:string="";
+  chatValue: string = "";
 
-  constructor(private aiService: chatInterfaceService){}
+  messages: { text: string, sender: 'user' | 'ai', attachments?: Attachment[] }[] = [];
+  isLoading = false;
+  modelName = "Microsoft Phi-2"; // From config manually or could fetch
+  username = "";
 
-  ngOnInit(){
+  constructor(private aiService: chatInterfaceService, private authService: AuthService) { }
 
+  ngOnInit() {
+    this.username = this.authService.getUsername() || 'User';
   }
 
-  sendChatMethod(){
-    const formData= new FormData();
-    const textmsg=this.chatValue;
+  logout() {
+    this.authService.logout();
+  }
+
+  sendChatMethod() {
+    if (!this.chatValue.trim() && this.selectedFiles.length === 0) return;
+
+    const currentMessage = {
+      text: this.chatValue,
+      sender: 'user' as const,
+      attachments: [...this.selectedFiles]
+    };
+    this.messages.push(currentMessage);
+
+    const formData = new FormData();
+    const textmsg = this.chatValue;
     formData.append('text', textmsg);
-    this.selectedFiles.forEach((item,index)=>{
-      formData.append('attachements',item.file)
+    this.selectedFiles.forEach((item, index) => {
+      formData.append('attachements', item.file)
     })
-    console.log(formData)
-    this.aiService.sendChatMethod(formData).subscribe(res=>{
-      console.log(res);
-    })
+
+    this.isLoading = true;
+    this.chatValue = "";
+    this.selectedFiles = [];
+    this.FileSelected = false;
+    this.borderRadius = "rounded-full items-center"; // Reset style
+
+    this.aiService.sendChatMethod(formData).subscribe({
+      next: (res: any) => {
+        this.messages.push({
+          text: res.message || "No response",
+          sender: 'ai'
+        });
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error(err);
+        this.messages.push({
+          text: "Error: Could not get response from server.",
+          sender: 'ai'
+        });
+        this.isLoading = false;
+      }
+    });
   }
 
   showCardMethod() {
@@ -63,8 +102,8 @@ export class ChatInterfaceComponent implements OnInit{
     }
   }
 
-  autoGrowForFile(){
-    this.borderRadius="rounded-lg items-end";
+  autoGrowForFile() {
+    this.borderRadius = "rounded-lg items-end";
   }
 
   fileSelecter(type: string) {
@@ -89,7 +128,6 @@ export class ChatInterfaceComponent implements OnInit{
             file,
             preview: reader.result as string
           });
-          console.log(this.selectedFiles)
         };
         reader.readAsDataURL(file);
       }
@@ -102,9 +140,8 @@ export class ChatInterfaceComponent implements OnInit{
     this.autoGrowForFile()
   }
 
-  removeItem(file:Attachment){
-    this.selectedFiles= this.selectedFiles.filter(f=>f!=file);
-    console.log(this.selectedFiles)
+  removeItem(file: Attachment) {
+    this.selectedFiles = this.selectedFiles.filter(f => f != file);
   }
 
 }

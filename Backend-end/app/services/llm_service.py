@@ -9,21 +9,19 @@ from config import MODEL_NAME, MAX_NEW_TOKENS, TEMPERATURE
 print("Loading tokenizer...")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
-# Phi models have no pad token → use EOS
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
 
 print("Loading config...")
 config = AutoConfig.from_pretrained(MODEL_NAME)
 
-# 🔑 CRITICAL FIX (must be BEFORE model init)
 config.pad_token_id = tokenizer.pad_token_id
 
 print("Loading model...")
 model = AutoModelForCausalLM.from_pretrained(
     MODEL_NAME,
     config=config,
-    dtype=torch.float32,     # ✅ torch_dtype is deprecated
+    dtype=torch.float32,
     device_map="auto"
 )
 

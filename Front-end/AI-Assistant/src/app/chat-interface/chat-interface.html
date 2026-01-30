@@ -1,88 +1,163 @@
-<div id="container" class="flex h-screen w-full overflow-hidden">
-    <div id="sidebar" class="w-15 h-full bg-zinc-700 border-r">
-        <div class="flex justify-center"><button class="w-10 h-10"><img src="app.png" alt=""></button></div>
-    </div>
-    <div class="flex flex-1 flex-col bg-zinc-800">
-        <div id="chatHistory" class="flex-1 overflow-y-auto p-4 bg-zinc-800">
-
-        </div>
-        <div id="textarea" class="w-full p-2 flex justify-center">
-            <div class="flex flex-col bg-zinc-600 p-2 col-span-6 w-full max-w-5xl rounded-xl">
-                <!-- 🔼 Upload Options Card -->
-                <div class="relative flex items-start">
-                    <div *ngIf="showCard"
-                        class="absolute bottom-5 left-0 rounded-lg bg-zinc-500 z-50 w-52 shadow-lg">
-                        <div class="m-2 hover:bg-zinc-600 rounded-lg p-1">
-                            <button class="flex gap-2 items-center w-full" (click)="fileSelecter('image')">
-                                <img class="w-6 h-6" src="image-2.png" />
-                                <span>Upload Image</span>
-                            </button>
-                        </div>
-
-                        <div class="m-2 hover:bg-zinc-600 rounded-lg p-1">
-                            <button class="flex gap-2 items-center w-full" (click)="fileSelecter('document')">
-                                <img class="w-6 h-6" src="more-information.png" />
-                                <span>Upload Document</span>
-                            </button>
-                        </div>
-
-                        <div class="m-2 flex justify-between hover:bg-zinc-600 rounded-lg p-1">
-                            <button class="flex gap-2 items-center">
-                                <img class="w-6 h-6" src="three-dots.png" />
-                                <span>More</span>
-                            </button>
-                            <button class="w-6 h-6">
-                                <img src="right.png" />
-                            </button>
-                        </div>
-                    </div>
+<div class="flex h-screen flex-col bg-gray-900 text-white">
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-6 py-4 shadow-md">
+        <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 font-bold">
+                AI
+            </div>
+            <div>
+                <h1 class="text-lg font-semibold">{{ modelName }}</h1>
+                <div class="flex items-center text-xs text-green-400">
+                    <span class="mr-1.5 h-2 w-2 rounded-full bg-green-400"></span>
+                    Online
                 </div>
-
-                <!-- 📎 Attachment Preview (NOW ABOVE INPUT) -->
-                <div *ngIf="FileSelected" class="flex mb-2 flex-wrap z-10">
-                    @for (file of selectedFiles; track file.preview) {
-                    <div class="relative">
-                        <button (click)="removeItem(file)"
-                            class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-zinc-400 text-sm flex items-center justify-center">
-                            ×
-                        </button>
-
-                        <img *ngIf="file.preview" [src]="file.preview" class="w-24 h-24 rounded-lg object-cover" />
-
-                        <img *ngIf="!file.preview" src="more-information.png" class="w-24 h-24 rounded-lg" />
-                    </div>
-                    }
-                </div>
-
-                <!-- 💬 Input Row -->
-                <div class="flex gap-2 items-end">
-
-                    <!-- ➕ Button -->
-                    <button (click)="showCardMethod()"
-                        class="w-10 h-10 rounded-full bg-zinc-500 hover:bg-zinc-600 flex items-center justify-center">
-                        ➕
-                    </button>
-
-                    <!-- 📝 Textarea -->
-                    <textarea placeholder="Type a message..." #chatInput [(ngModel)]="chatValue" (input)="autoGrow(chatInput)" rows="1"
-                        class="flex-1 bg-transparent py-2 px-3 focus:outline-none resize-none text-white max-h-40"></textarea>
-
-                    <!-- 🎤 Voice -->
-                    <button
-                        class="w-10 h-10 bg-zinc-400 rounded-full hover:bg-zinc-600 flex items-center justify-center">
-                        <img class="w-6 h-6" src="voice-record.png" />
-                    </button>
-
-                    <!-- ➤ Send -->
-                    <button (click)="sendChatMethod()"
-                        class="w-10 h-10 bg-zinc-400 rounded-full hover:bg-zinc-600 flex items-center justify-center">
-                        <img src="right.png" />
-                    </button>
-                </div>
-
-                <input type="file" hidden #fileInput (change)="onFileSelected($event)">
             </div>
         </div>
 
+        <div class="flex items-center gap-4">
+            <span class="hidden text-sm text-gray-400 sm:block">Logged in as <span class="text-white">{{ username
+                    }}</span></span>
+            <button (click)="logout()"
+                class="rounded-lg bg-red-600/20 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-600/30 transition-colors">
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 scroll-smooth">
+        <!-- Welcome Message if empty -->
+        <div *ngIf="messages.length === 0"
+            class="flex h-full flex-col items-center justify-center text-center text-gray-500">
+            <div class="mb-4 text-6xl">👋</div>
+            <h2 class="text-2xl font-bold text-white">How can I help you today?</h2>
+            <p class="mt-2 max-w-md">I can analyze documents, images, and answer your questions using {{ modelName }}.
+            </p>
+        </div>
+
+        <!-- Message Loop -->
+        <div *ngFor="let msg of messages" class="flex w-full"
+            [ngClass]="{'justify-end': msg.sender === 'user', 'justify-start': msg.sender === 'ai'}">
+            <div class="flex max-w-[85%] sm:max-w-[70%] gap-3" [ngClass]="{'flex-row-reverse': msg.sender === 'user'}">
+
+                <!-- Avatar -->
+                <div class="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center"
+                    [ngClass]="{'bg-blue-600': msg.sender === 'ai', 'bg-purple-600': msg.sender === 'user'}">
+                    {{ msg.sender === 'ai' ? '🤖' : '👤' }}
+                </div>
+
+                <!-- Bubble -->
+                <div class="rounded-2xl p-4 shadow-sm" [ngClass]="{
+               'bg-blue-600 text-white rounded-tr-none': msg.sender === 'user',
+               'bg-gray-800 text-gray-100 rounded-tl-none border border-gray-700': msg.sender === 'ai'
+             }">
+
+                    <!-- Attachments (Images) -->
+                    <div *ngIf="msg.attachments && msg.attachments.length > 0" class="mb-3 flex flex-wrap gap-2">
+                        <div *ngFor="let att of msg.attachments">
+                            <img *ngIf="att.preview" [src]="att.preview"
+                                class="h-32 rounded-lg object-cover border border-white/20" alt="attachment">
+                            <div *ngIf="!att.preview" class="flex items-center gap-2 rounded bg-white/10 p-2 text-xs">
+                                📄 {{ att.file.name }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Text -->
+                    <div class="whitespace-pre-wrap leading-relaxed">{{ msg.text }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div *ngIf="isLoading" class="flex w-full justify-start">
+            <div class="flex max-w-[85%] sm:max-w-[70%] gap-3">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">🤖</div>
+                <div class="rounded-2xl rounded-tl-none bg-gray-800 p-4 border border-gray-700">
+                    <div class="flex space-x-2">
+                        <div class="h-2 w-2 animate-bounce rounded-full bg-gray-400"></div>
+                        <div class="h-2 w-2 animate-bounce rounded-full bg-gray-400 delay-100"></div>
+                        <div class="h-2 w-2 animate-bounce rounded-full bg-gray-400 delay-200"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="border-t border-gray-800 bg-gray-900 p-4">
+        <div class="mx-auto max-w-4xl">
+            <!-- File Preview Staging -->
+            <div *ngIf="selectedFiles.length > 0" class="mb-4 flex gap-4 overflow-x-auto pb-2">
+                <div *ngFor="let file of selectedFiles" class="relative group">
+                    <div class="relative h-20 w-20 overflow-hidden rounded-xl border border-gray-600 bg-gray-800">
+                        <img *ngIf="file.preview" [src]="file.preview" class="h-full w-full object-cover">
+                        <div *ngIf="!file.preview" class="flex h-full w-full items-center justify-center text-2xl">📄
+                        </div>
+                    </div>
+                    <button (click)="removeItem(file)"
+                        class="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow-md hover:bg-red-600">×</button>
+                </div>
+            </div>
+
+            <!-- Input Box -->
+            <div
+                class="relative flex items-end rounded-2xl bg-gray-800 border border-gray-700 shadow-lg focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                <!-- Attachment Button -->
+                <button (click)="showCardMethod()"
+                    class="mb-2 ml-3 rounded-full p-2 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                    title="Attach file">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="h-6 w-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                    </svg>
+                </button>
+
+                <!-- Attachment Menu -->
+                <div *ngIf="showCard"
+                    class="absolute bottom-16 left-0 z-10 w-48 rounded-xl bg-gray-800 p-2 shadow-xl border border-gray-700 animate-in fade-in slide-in-from-bottom-2">
+                    <button (click)="fileSelecter('image')"
+                        class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left hover:bg-gray-700 text-blue-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                        </svg>
+                        <span>Image</span>
+                    </button>
+                    <button (click)="fileSelecter('document')"
+                        class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left hover:bg-gray-700 text-green-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                        </svg>
+                        <span>Document</span>
+                    </button>
+                </div>
+
+                <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" multiple />
+
+                <!-- Text Area -->
+                <textarea #chatTextarea [(ngModel)]="chatValue" (input)="autoGrow(chatTextarea)"
+                    class="max-h-[200px] w-full resize-none bg-transparent px-4 py-4 text-white placeholder-gray-500 focus:outline-none"
+                    placeholder="Ask anything..." rows="1"
+                    (keydown.enter)="$event.preventDefault(); sendChatMethod()"></textarea>
+
+                <!-- Send Button -->
+                <button (click)="sendChatMethod()"
+                    [disabled]="isLoading || (!chatValue.trim() && selectedFiles.length === 0)"
+                    class="mb-2 mr-2 rounded-xl bg-blue-600 p-2 text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+                        <path
+                            d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+                    </svg>
+                </button>
+            </div>
+
+            <p class="mt-2 text-center text-xs text-gray-500">AI can make mistakes. Please verify important information.
+            </p>
+        </div>
     </div>
 </div>
